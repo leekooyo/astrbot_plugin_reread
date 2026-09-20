@@ -60,4 +60,9 @@ class RereadPlugin(Star):
         if not plan.output_segment:
             return
 
-        yield event.chain_result([plan.output_segment])
+        msg = event.chain_result([plan.output_segment])
+        if self.cfg.skip_pipeline:
+            await event.send(msg)
+            event.stop_event()
+        else:
+            yield msg

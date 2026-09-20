@@ -17,6 +17,12 @@
         "hint": "是否要求消息要来自不同人才进行复读检测，此机制可以防止单个人恶意引导复读，如广告哥",
         "default": true
     },
+    "skip_pipeline":{
+        "description": "跳过消息处理",
+        "type": "bool",
+        "hint": "开启后, 发送复读消息时将直接跳过Astrbot的消息处理管道, 消息不会被附加多余的组件，也不会进入上下文",
+        "default": false
+    },
     "thresholds": {
         "description": "复读检测阈值",
         "type": "object",

@@ -76,6 +76,7 @@ class PluginConfig(ConfigNode):
     group_whitelist: list[str]
     blocked_words: list[str]
     need_different: bool
+    skip_pipeline: bool
     thresholds: dict[str, int]
     reread_prob: float
     follow: FollowConfig
