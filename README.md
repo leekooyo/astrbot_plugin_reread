@@ -26,7 +26,9 @@ _✨ 复读插件 ✨_
 
 ## 📦 安装
 
-在 AstrBot 插件市场搜索 **astrbot_plugin_reread**，点击安装即可。
+在 AstrBot 中选择「通过仓库地址安装」，填写 `https://github.com/leekooyo/astrbot_plugin_reread`。本仓库基于 [Zhalslar 原项目](https://github.com/Zhalslar/astrbot_plugin_reread) 独立维护，维护差异见 [UPSTREAM.md](UPSTREAM.md)。
+
+默认对所有群生效（群白名单为空）、达到阈值后以 `0.8` 的概率响应，且禁言动作权重为 `5`。不希望复读触发禁言时将 `ban.weight` 设为 `0`；建议先在测试群确认阈值与响应频率。复读状态只保存在内存中，不需要上传聊天记录或运行数据。
 
 ## ⌨️ 配置
 
@@ -67,5 +69,4 @@ _✨ 复读插件 ✨_
 
 - 复读阈值不建议设置过低，容易刷屏
 - 插件只处理单段消息，多段消息会被忽略
-- 想第一时间反馈问题可加入插件反馈群（QQ群）：  
-  **460973561**（不点 Star 不给进）
+- 此维护版的问题请在本仓库提交 Issue。
