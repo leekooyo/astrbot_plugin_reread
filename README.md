@@ -1,8 +1,6 @@
 <div align="center">
 
-
 # astrbot_plugin_reread
-
 
 _✨ 复读插件 ✨_  
 
@@ -11,6 +9,8 @@ _✨ 复读插件 ✨_
 </div>
 
 > 本仓库由 [leekooyo](https://github.com/leekooyo) 维护，基于 [Zhalslar 的原项目](https://github.com/Zhalslar/astrbot_plugin_reread)；安装和更新请使用本仓库地址。原始基线见 [UPSTREAM.md](UPSTREAM.md)。
+
+**当前版本：v2.1.2。** 版本号以 [metadata.yaml](metadata.yaml) 为准。
 
 ## 🤝 介绍
 
@@ -65,4 +65,3 @@ _✨ 复读插件 ✨_
 
 - 复读阈值不建议设置过低，容易刷屏
 - 插件只处理单段消息，多段消息会被忽略
-- 此维护版的问题请在本仓库提交 Issue。
