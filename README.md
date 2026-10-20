@@ -1,17 +1,16 @@
 <div align="center">
 
-![:name](https://count.getloli.com/@astrbot_plugin_reread?name=astrbot_plugin_reread&theme=minecraft&padding=6&offset=0&align=top&scale=1&pixelated=1&darkmode=auto)
 
 # astrbot_plugin_reread
+
 
 _✨ 复读插件 ✨_  
 
 [![License](https://img.shields.io/badge/License-GPLv3-blue.svg)](https://www.gnu.org/licenses/gpl-3.0.html)
-[![Python 3.10+](https://img.shields.io/badge/Python-3.10%2B-blue.svg)](https://www.python.org/)
-[![AstrBot](https://img.shields.io/badge/AstrBot-4.0%2B-orange.svg)](https://github.com/Soulter/AstrBot)
-[![GitHub](https://img.shields.io/badge/作者-Zhalslar-blue)](https://github.com/Zhalslar)
 
 </div>
+
+> 本仓库由 [leekooyo](https://github.com/leekooyo) 维护，基于 [Zhalslar 的原项目](https://github.com/Zhalslar/astrbot_plugin_reread)；安装和更新请使用本仓库地址。原始基线见 [UPSTREAM.md](UPSTREAM.md)。
 
 ## 🤝 介绍
 
@@ -58,12 +57,9 @@ _✨ 复读插件 ✨_
   - 无需冷却时间，行为稳定且可预测
 - 图片判等优先使用 `file`，为空时自动退化为 `url / path`
 
-## 👥 贡献指南
+## 反馈与维护
 
-- 🌟 Star 本项目（感谢支持）
-- 🐛 提交 Issue 报告问题
-- 💡 提出新功能建议
-- 🔧 提交 Pull Request 改进代码
+此维护版的问题和改进请在本仓库提交 Issue 或 Pull Request。上游版本会在核对差异后手动合并。
 
 ## 📌 注意事项
 
