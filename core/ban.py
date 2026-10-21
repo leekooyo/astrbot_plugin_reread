@@ -1,7 +1,10 @@
 from __future__ import annotations
 
 from astrbot.api import logger
+from astrbot.core.message.components import Plain
+from astrbot.core.message.message_event_result import MessageChain
 from astrbot.core.platform import AstrMessageEvent
+from astrbot.core.utils.message_send_policy import send_reread_message
 
 from .config import PluginConfig
 
@@ -37,9 +40,14 @@ class RereadBanHandler:
 
         prompt = self._format_prompt(event, repeat_count)
         if prompt:
-            await event.send(event.plain_result(prompt))
-
-        event.stop_event()
+            if event.get_platform_name() == "aiocqhttp":
+                # OneBot 新模式：提示语走精确授权的直接发送，不停止事件
+                await send_reread_message(event, MessageChain([Plain(prompt)]))
+            else:
+                # 其他平台保持旧行为
+                await event.send(event.plain_result(prompt))
+        if event.get_platform_name() != "aiocqhttp":
+            event.stop_event()
         return True
 
     def _format_prompt(self, event: AstrMessageEvent, repeat_count: int) -> str:

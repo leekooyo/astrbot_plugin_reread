@@ -17,6 +17,17 @@ class ActionPlan:
     output_segment: BaseMessageComponent | None = None
 
 
+@dataclass(slots=True)
+class Evaluation:
+    """检测结果与可选动作相互独立。
+
+    repeated 与概率、动作权重和动作去重无关：只要达到阈值即为复读。
+    """
+
+    repeated: bool
+    action_plan: ActionPlan | None = None
+
+
 class RereadEngine:
     ACTIONS = ("follow", "interrupt", "ban")
 
@@ -54,35 +65,59 @@ class RereadEngine:
         seg_type: str,
         send_id: str,
         seg: BaseMessageComponent,
-    ) -> ActionPlan | None:
+    ) -> Evaluation:
         state.clear_if_same_sender(seg_type, send_id, self.cfg.need_different)
 
         fingerprint = self.make_fingerprint(seg)
+
+        # 内容变化（含类型切换）结束旧链，本条消息开启新链
+        if (
+            state.current_fingerprint is not None
+            and fingerprint != state.current_fingerprint
+        ):
+            state.reset_episode()
+
         state.push_message(seg_type, send_id, fingerprint)
+        state.current_fingerprint = fingerprint
 
         reread_threshold = self.cfg.get_threshold(seg_type)
-        reread_fingerprint = state.get_uniform_tail_fingerprint(
-            seg_type, reread_threshold
-        )
-        if not reread_fingerprint or state.is_same_as_last_action(reread_fingerprint):
-            return None
+
+        repeated = state.is_episode_active_for(fingerprint)
+        if not repeated:
+            tail_fp = state.get_uniform_tail_fingerprint(seg_type, reread_threshold)
+            if tail_fp == fingerprint:
+                state.activate_episode(fingerprint)
+                repeated = True
+
+        if not repeated:
+            return Evaluation(repeated=False, action_plan=None)
+
+        # 复读动作：概率未命中、权重为 0、本链已执行过均不阻止抑制状态
+        if state.has_action_for(fingerprint):
+            return Evaluation(repeated=True, action_plan=None)
 
         if not self.cfg.should_reread():
-            return None
+            return Evaluation(repeated=True, action_plan=None)
 
         if not self._actions:
-            return None
+            return Evaluation(repeated=True, action_plan=None)
 
-        state.mark_handled(reread_fingerprint)
+        state.mark_action(fingerprint)
         action = random.choices(self._actions, self._weights, k=1)[0]
         if action == "ban":
-            return ActionPlan(repeat_count=reread_threshold, action=action)
+            return Evaluation(
+                repeated=True,
+                action_plan=ActionPlan(repeat_count=reread_threshold, action=action),
+            )
 
         output_segment = (
             Plain(self.cfg.interrupt.text) if action == "interrupt" else seg
         )
-        return ActionPlan(
-            repeat_count=reread_threshold,
-            action=action,
-            output_segment=output_segment,
+        return Evaluation(
+            repeated=True,
+            action_plan=ActionPlan(
+                repeat_count=reread_threshold,
+                action=action,
+                output_segment=output_segment,
+            ),
         )

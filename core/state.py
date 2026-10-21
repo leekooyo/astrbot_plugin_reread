@@ -16,7 +16,7 @@ class GroupState:
     """
     单群状态容器
     - 按消息类型分组的消息窗口（deque + maxlen）
-    - 最近一次成功复读的消息指纹（用于幂等保护）
+    - 当前连续复读链：当前链指纹、已激活指纹、本链已执行动作的指纹
     """
 
     def __init__(self, window_sizes: dict[str, int]):
@@ -28,8 +28,12 @@ class GroupState:
             seg_type: deque(maxlen=limit) for seg_type, limit in window_sizes.items()
         }
 
-        # Fingerprint handled by the latest successful action.
-        self.last_handled_fingerprint: str | None = None
+        # 当前连续复读链的指纹（最近一条进入判定的消息）
+        self.current_fingerprint: str | None = None
+        # 本链中已达到阈值、进入发送抑制的指纹
+        self.active_fingerprint: str | None = None
+        # 本链中已执行过复读动作的指纹（每链每个指纹至多一次）
+        self._actioned_fingerprints: set[str] = set()
 
     # ───────── 窗口维护 ─────────
 
@@ -89,37 +93,56 @@ class GroupState:
     def clear_all(self) -> None:
         """
         清空当前群内所有消息窗口
-        （通常在一次成功复读后调用）
         """
         for lst in self.messages.values():
             lst.clear()
 
-    # ───────── 幂等保护 ─────────
+    def reset_episode(self) -> None:
+        """结束当前连续复读链。
 
-    def is_same_as_last_action(self, fingerprint: str) -> bool:
-        """Check whether the candidate fingerprint matches the last handled one."""
-        return self.last_handled_fingerprint == fingerprint
-
-    def mark_handled(self, fingerprint: str) -> None:
-        """Record a successful action and clear windows to avoid immediate retrigger."""
-        self.last_handled_fingerprint = fingerprint
+        清空全部类型窗口、当前/激活指纹和本链动作去重记录。
+        """
         self.clear_all()
+        self.current_fingerprint = None
+        self.active_fingerprint = None
+        self._actioned_fingerprints.clear()
+
+    # ───────── 复读链状态 ─────────
+
+    def is_episode_active_for(self, fingerprint: str) -> bool:
+        """当前链是否已因该指纹进入抑制状态。"""
+        return self.active_fingerprint == fingerprint
+
+    def activate_episode(self, fingerprint: str) -> None:
+        self.active_fingerprint = fingerprint
+
+    def has_action_for(self, fingerprint: str) -> bool:
+        """本链是否已对该指纹执行过复读动作。"""
+        return fingerprint in self._actioned_fingerprints
+
+    def mark_action(self, fingerprint: str) -> None:
+        self._actioned_fingerprints.add(fingerprint)
 
 
 class StateManager:
     """
-    全局状态管理器（按群）
+    全局状态管理器（按 平台/机器人/群 三元组）
     """
-
-    _group_states: dict[str, GroupState] = {}
 
     def __init__(self, window_sizes: dict[str, int]):
         self.window_sizes = window_sizes
+        self._group_states: dict[tuple[str, str, str], GroupState] = {}
 
-    def get_state(self, gid: str) -> GroupState:
+    def get_state(self, scope: tuple[str, str, str]) -> GroupState:
         """
-        获取或初始化指定群的状态对象
+        获取或初始化指定范围（platform_id, self_id, group_id）的状态对象
         """
-        if gid not in self._group_states:
-            self._group_states[gid] = GroupState(self.window_sizes)
-        return self._group_states[gid]
+        if scope not in self._group_states:
+            self._group_states[scope] = GroupState(self.window_sizes)
+        return self._group_states[scope]
+
+    def reset_scope(self, scope: tuple[str, str, str]) -> None:
+        """结束指定范围的连续复读链（若存在）。"""
+        state = self._group_states.get(scope)
+        if state is not None:
+            state.reset_episode()
